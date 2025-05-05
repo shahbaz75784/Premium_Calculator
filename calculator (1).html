@@ -1,0 +1,226 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Calculator by Shahbaz</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: linear-gradient(to bottom right, #5f00ba, #8a2be2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+
+    .calculator {
+      background-color: #111;
+      padding: 20px;
+      border-radius: 25px;
+      box-shadow: 0 0 20px rgba(0, 0, 0, 0.5);
+      width: 320px;
+    }
+
+    .display {
+      background-color: #000;
+      color: #fff;
+      font-size: 2.5em;
+      padding: 15px;
+      text-align: right;
+      border-radius: 15px;
+      margin-bottom: 20px;
+      overflow-x: auto;
+    }
+
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    button {
+      padding: 20px;
+      font-size: 1.3em;
+      border: none;
+      border-radius: 15px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    .number {
+      background-color: #6a67ce;
+      color: white;
+    }
+
+    .operator,
+    .special {
+      background-color: #f7cd2e;
+      color: black;
+    }
+
+    .history {
+      background-color: orange;
+      color: white;
+    }
+
+    .equal {
+      background-color: #f7cd2e;
+      color: black;
+      grid-column: span 2;
+    }
+
+    .footer {
+      margin-top: 15px;
+      color: white;
+      font-weight: bold;
+    }
+
+    .history-panel {
+      margin-top: 10px;
+      background: white;
+      border-radius: 10px;
+      padding: 10px;
+      width: 300px;
+      max-height: 120px;
+      overflow-y: auto;
+      display: none;
+    }
+
+    .history-item {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 5px;
+      padding: 5px;
+      cursor: pointer;
+    }
+
+    .history-item:hover {
+      background-color: #f1f1f1;
+    }
+
+    .delete-btn {
+      color: red;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="calculator">
+    <div class="display" id="display">0</div>
+    <div class="buttons">
+      <button class="number">7</button>
+      <button class="number">8</button>
+      <button class="number">9</button>
+      <button class="operator">+</button>
+
+      <button class="number">4</button>
+      <button class="number">5</button>
+      <button class="number">6</button>
+      <button class="operator">-</button>
+
+      <button class="number">1</button>
+      <button class="number">2</button>
+      <button class="number">3</button>
+      <button class="operator">*</button>
+
+      <button class="number">0</button>
+      <button class="special">.</button>
+      <button class="history">History</button>
+      <button class="operator">/</button>
+
+      <button class="special">C</button>
+      <button class="special">AC</button>
+      <button class="equal">=</button>
+    </div>
+  </div>
+
+  <div class="history-panel" id="historyPanel"></div>
+  <div class="footer">Created by Shahbaz</div>
+
+  <script>
+    const display = document.getElementById('display');
+    const buttons = document.querySelectorAll('button');
+    const historyPanel = document.getElementById('historyPanel');
+    let currentInput = '';
+    let history = JSON.parse(localStorage.getItem('history')) || [];
+
+    function updateHistoryPanel() {
+      historyPanel.innerHTML = history.map((item, index) => `
+        <div class="history-item" data-index="${index}">
+          <span>${item}</span>
+          <span class="delete-btn" onclick="deleteHistory(${index})">Delete</span>
+        </div>
+      `).join('');
+    }
+
+    function saveHistory() {
+      localStorage.setItem('history', JSON.stringify(history));
+    }
+
+    buttons.forEach(button => {
+      button.addEventListener('click', () => {
+        const value = button.innerText;
+
+        if (button.classList.contains('number') || button.classList.contains('operator') || value === '.') {
+          if (display.innerText === '0' && value !== '.') {
+            currentInput = value;
+          } else {
+            currentInput += value;
+          }
+          display.innerText = currentInput;
+        } else if (value === 'AC') {
+          currentInput = '';
+          display.innerText = '0';
+        } else if (value === 'C') {
+          currentInput = currentInput.slice(0, -1);
+          display.innerText = currentInput || '0';
+        } else if (value === '=') {
+          try {
+            const result = eval(currentInput);
+            history.push(`${currentInput} = ${result}`);
+            currentInput = result.toString();
+            display.innerText = currentInput;
+            saveHistory();
+            updateHistoryPanel();
+          } catch {
+            display.innerText = 'Error';
+            currentInput = '';
+          }
+        } else if (value === 'History') {
+          historyPanel.style.display = historyPanel.style.display === 'block' ? 'none' : 'block';
+          updateHistoryPanel();
+        } else if (value === '.') {
+          // Prevent multiple decimal points
+          if (!currentInput.includes('.')) {
+            currentInput += value;
+            display.innerText = currentInput;
+          }
+        }
+      });
+    });
+
+    function deleteHistory(index) {
+      history.splice(index, 1);
+      saveHistory();
+      updateHistoryPanel();
+    }
+
+    // Select history entry to display it in the calculator
+    historyPanel.addEventListener('click', (event) => {
+      const historyItem = event.target.closest('.history-item');
+      if (historyItem) {
+        const index = historyItem.getAttribute('data-index');
+        if (index !== null) {
+          currentInput = history[index].split('=')[0].trim();
+          display.innerText = currentInput;
+        }
+      }
+    });
+  </script>
+
+</body>
+</html>
